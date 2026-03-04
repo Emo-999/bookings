@@ -459,7 +459,7 @@
         <div class="bw-actions">
           <button class="bw-btn bw-btn-secondary" id="bw-back">← Back</button>
           <button class="bw-btn bw-btn-primary" id="bw-submit" disabled>
-            Confirm Booking
+            Confirm & Pay
           </button>
         </div>
       `;
@@ -778,7 +778,6 @@
         customer_email: customerEmail,
         customer_phone: customerPhone || null,
         notes:          notes || null,
-        status:         'pending',
       };
 
       if (business.type === 'hotel') {
@@ -791,13 +790,41 @@
       }
 
       try {
-        await this.db.from('bookings').then(t => t.insert(payload));
-        this.setState({ step: 4, error: null });
-        this.render();
+        const res = await fetch(this.config.workerUrl + '/api/reserve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Server error ${res.status}`);
+        }
+
+        const { booking_id, cart_url } = await res.json();
+
+        // Store booking summary in localStorage so the CloudCart checkout
+        // page JS snippet can populate the order note field
+        try {
+          localStorage.setItem('bw_pending_booking', JSON.stringify({
+            booking_id,
+            customer_name:  customerName,
+            customer_email: customerEmail,
+            service_name:   selectedService?.name || '',
+            resource_name:  business.type === 'hotel'
+                              ? selectedRoom?.name
+                              : selectedStaff?.name,
+            ts: Date.now(),
+          }));
+        } catch (_) { /* localStorage unavailable — proceed anyway */ }
+
+        // Redirect to CloudCart cart
+        window.location.href = cart_url;
+
       } catch (e) {
         const msg = e?.message || 'Booking failed. Please try again.';
         this.setState({ error: msg });
-        if (btn) { btn.disabled = false; btn.textContent = 'Confirm Booking'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Pay'; }
         this.render();
       }
     }
@@ -810,6 +837,7 @@
         businessId:   el.dataset.businessId,
         supabaseUrl:  el.dataset.supabaseUrl,
         supabaseKey:  el.dataset.supabaseKey,
+        workerUrl:    el.dataset.workerUrl || 'https://bookings.e-kurtisi.workers.dev',
       };
       if (!config.businessId || !config.supabaseUrl || !config.supabaseKey) {
         el.innerHTML = '<div style="color:red;font-size:.85rem;">Booking widget: missing data attributes.</div>';

@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bookings",
+  "compatibility_date": "2026-03-01",
+  "main": "./src/worker.js",
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "CLOUDCART_STORE_URL": "https://smokezone.cloudcart.net"
+  }
+  // Secrets — set via Cloudflare dashboard > Workers > bookings > Settings > Variables:
+  //   SUPABASE_URL               = https://exzobwyejtvtqsfrsrvz.supabase.co
+  //   SUPABASE_SERVICE_ROLE_KEY  = (from Supabase > Project Settings > API > service_role)
+  //   CLOUDCART_WEBHOOK_SECRET   = (any random string you choose, used to verify webhooks)
+}
