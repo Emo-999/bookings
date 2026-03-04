@@ -265,7 +265,7 @@
       this.setState({ loading: true });
       try {
         const rows = await this.db.from('businesses').then(t =>
-          t.select('*', { slug: `eq.${this.config.businessId}` })
+          t.select('*', { id: `eq.${this.config.businessId}` })
         );
         if (!rows.length) throw new Error('Business not found');
         this.state.business = rows[0];
