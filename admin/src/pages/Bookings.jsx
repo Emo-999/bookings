@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase.js';
+import { useBusiness } from '../context/BusinessContext.jsx';
 
 const STATUS_COLORS = {
   pending:   { bg:'#fef9c3', color:'#854d0e', label:'Pending' },
@@ -26,38 +27,27 @@ function formatDateTime(iso) {
 }
 
 export default function Bookings() {
+  const { activeBusiness } = useBusiness();
   const [bookings, setBookings]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [filter, setFilter]       = useState('all');
   const [search, setSearch]       = useState('');
-  const [business, setBusiness]   = useState(null);
   const [updating, setUpdating]   = useState(null);
 
   useEffect(() => {
+    if (!activeBusiness) return;
+    setLoading(true);
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: member } = await supabase
-        .from('business_members')
-        .select('business_id, businesses(*)')
-        .eq('user_id', user.id)
-        .single();
-      if (!member) return;
-      setBusiness(member.businesses);
-
       const { data } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          resources(name, type),
-          services(name, price, currency, duration_minutes)
-        `)
-        .eq('business_id', member.business_id)
+        .select('*, resources(name, type), services(name, price, currency, duration_minutes)')
+        .eq('business_id', activeBusiness.id)
         .order('created_at', { ascending: false });
       setBookings(data || []);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [activeBusiness]);
 
   async function updateStatus(id, status) {
     setUpdating(id);
@@ -74,7 +64,7 @@ export default function Bookings() {
     return matchStatus && matchSearch;
   });
 
-  const isHotel = business?.type === 'hotel';
+  const isHotel = activeBusiness?.type === 'hotel';
 
   return (
     <div>

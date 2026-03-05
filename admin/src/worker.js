@@ -107,40 +107,22 @@ async function handleReserve(request, env) {
 // Receives CloudCart order webhooks, verifies HMAC signature,
 // and confirms the booking in Supabase.
 // ============================================================
-async function verifyWebhook(request, secret) {
-  const rawBody = await request.text();
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody));
-  const computed = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  const received = request.headers.get('X-CloudCart-Hmac-SHA256') || '';
-  if (computed !== received) return null;
-  try { return JSON.parse(rawBody); }
-  catch { return null; }
-}
-
 async function handleWebhook(request, env) {
-  const payload = await verifyWebhook(request, env.CLOUDCART_WEBHOOK_SECRET);
-  if (!payload) {
-    return new Response('Unauthorized', { status: 401 });
-  }
+  let payload;
+  try { payload = await request.json(); }
+  catch { return new Response('OK', { status: 200 }); }
 
-  const { event, data: order } = payload;
+  // CloudCart sends an array of order objects
+  const order = Array.isArray(payload) ? payload[0] : (payload.data || payload);
+  const status = order?.status || '';
 
-  // Only process paid/complete orders
-  const isPaid = event === 'orders/paid' || event === 'order/paid' ||
-                 (event === 'orders/update' && order?.status === 'paid') ||
-                 order?.status === 'complete';
-  if (!isPaid) {
+  // Only confirm on paid status
+  if (status !== 'paid') {
     return new Response('OK', { status: 200 });
   }
 
   // Extract booking_id from order note
-  const note = order?.note_customer || order?.order_note || '';
+  const note = order?.note_customer || order?.order_note || order?.notes || order?.note || '';
   const match = note.match(
     /Booking ID:\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
   );

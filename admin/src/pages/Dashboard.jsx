@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase.js';
+import { useBusiness } from '../context/BusinessContext.jsx';
 
 function StatCard({ label, value, sub, color }) {
   return (
@@ -14,20 +15,15 @@ function StatCard({ label, value, sub, color }) {
 }
 
 export default function Dashboard() {
+  const { activeBusiness } = useBusiness();
   const [stats, setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!activeBusiness) return;
+    setLoading(true);
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: member } = await supabase
-        .from('business_members')
-        .select('business_id, businesses(type)')
-        .eq('user_id', user.id)
-        .single();
-      if (!member) return;
-
-      const bid = member.business_id;
+      const bid = activeBusiness.id;
       const now = new Date().toISOString();
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
@@ -55,7 +51,7 @@ export default function Dashboard() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [activeBusiness]);
 
   if (loading) return <div style={{ color:'#94a3b8', textAlign:'center', padding:'48px' }}>Loading...</div>;
 

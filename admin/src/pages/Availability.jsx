@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase.js';
+import { useBusiness } from '../context/BusinessContext.jsx';
 
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 export default function Availability() {
-  const [business, setBusiness]     = useState(null);
+  const { activeBusiness } = useBusiness();
   const [resources, setResources]   = useState([]);
   const [selected, setSelected]     = useState(null);
   const [schedules, setSchedules]   = useState([]);
@@ -16,26 +17,21 @@ export default function Availability() {
   const [blockError, setBlockError] = useState(null);
 
   useEffect(() => {
+    if (!activeBusiness) return;
+    setLoading(true);
+    setSelected(null);
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: member } = await supabase
-        .from('business_members')
-        .select('business_id, businesses(*)')
-        .eq('user_id', user.id)
-        .single();
-      if (!member) return;
-      setBusiness(member.businesses);
       const { data: res } = await supabase
         .from('resources')
         .select('*')
-        .eq('business_id', member.business_id)
+        .eq('business_id', activeBusiness.id)
         .eq('is_active', true);
       setResources(res || []);
       if (res?.length) setSelected(res[0]);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [activeBusiness]);
 
   useEffect(() => {
     if (!selected) return;

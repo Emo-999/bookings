@@ -837,7 +837,7 @@
         businessId:   el.dataset.businessId,
         supabaseUrl:  el.dataset.supabaseUrl,
         supabaseKey:  el.dataset.supabaseKey,
-        workerUrl:    el.dataset.workerUrl || 'https://bookings.e-kurtisi.workers.dev',
+        workerUrl:    el.dataset.workerUrl || 'https://booking-admin.e-kurtisi.workers.dev',
       };
       if (!config.businessId || !config.supabaseUrl || !config.supabaseKey) {
         el.innerHTML = '<div style="color:red;font-size:.85rem;">Booking widget: missing data attributes.</div>';

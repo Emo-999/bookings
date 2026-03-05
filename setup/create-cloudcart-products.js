@@ -21,14 +21,14 @@ if (!CC_KEY || !SUPA_KEY) {
 
 const products = [
   // Hotel Adriatic — rate plans (qty = nights at checkout)
-  { service_id: 'bbbb0001-0000-0000-0000-000000000001', name: 'Hotel Adriatic — Room Only',         sku: 'svc-bbbb0001', price: '80.00',  description: 'Accommodation only, no meals included' },
-  { service_id: 'bbbb0002-0000-0000-0000-000000000001', name: 'Hotel Adriatic — Bed & Breakfast',   sku: 'svc-bbbb0002', price: '110.00', description: 'Accommodation with daily breakfast' },
-  { service_id: 'bbbb0003-0000-0000-0000-000000000001', name: 'Hotel Adriatic — Half Board',        sku: 'svc-bbbb0003', price: '145.00', description: 'Accommodation with breakfast and dinner' },
+  { service_id: 'bbbb0001-0000-0000-0000-000000000001', name: 'Hotel Adriatic — Room Only',         sku: 'svc-bbbb0001', price: 8000,   description: 'Accommodation only, no meals included. Price per night.' },
+  { service_id: 'bbbb0002-0000-0000-0000-000000000001', name: 'Hotel Adriatic — Bed & Breakfast',   sku: 'svc-bbbb0002', price: 11000,  description: 'Accommodation with daily breakfast. Price per night.' },
+  { service_id: 'bbbb0003-0000-0000-0000-000000000001', name: 'Hotel Adriatic — Half Board',        sku: 'svc-bbbb0003', price: 14500,  description: 'Accommodation with breakfast and dinner. Price per night.' },
   // Salon Bella — services (qty = 1 at checkout)
-  { service_id: 'dddd0001-0000-0000-0000-000000000002', name: 'Salon Bella — Haircut',              sku: 'svc-dddd0001', price: '25.00',  description: 'Haircut, 45 min' },
-  { service_id: 'dddd0002-0000-0000-0000-000000000002', name: 'Salon Bella — Color & Highlights',   sku: 'svc-dddd0002', price: '80.00',  description: 'Color and highlights, 120 min' },
-  { service_id: 'dddd0003-0000-0000-0000-000000000002', name: "Salon Bella — Men's Cut",            sku: 'svc-dddd0003', price: '18.00',  description: "Men's haircut, 30 min" },
-  { service_id: 'dddd0004-0000-0000-0000-000000000002', name: 'Salon Bella — Beard Trim',           sku: 'svc-dddd0004', price: '12.00',  description: 'Beard trim, 20 min' },
+  { service_id: 'dddd0001-0000-0000-0000-000000000002', name: 'Salon Bella — Haircut',              sku: 'svc-dddd0001', price: 2500,   description: 'Haircut, 45 min.' },
+  { service_id: 'dddd0002-0000-0000-0000-000000000002', name: 'Salon Bella — Color & Highlights',   sku: 'svc-dddd0002', price: 8000,   description: 'Color and highlights, 120 min.' },
+  { service_id: 'dddd0003-0000-0000-0000-000000000002', name: "Salon Bella — Men's Cut",            sku: 'svc-dddd0003', price: 1800,   description: "Men's haircut, 30 min." },
+  { service_id: 'dddd0004-0000-0000-0000-000000000002', name: 'Salon Bella — Beard Trim',           sku: 'svc-dddd0004', price: 1200,   description: 'Beard trim, 20 min.' },
 ];
 
 const ccHeaders = {
@@ -43,10 +43,14 @@ const supaHeaders = {
   'Content-Type': 'application/json',
 };
 
+// 1. "Bookings" category already created (id=654) — skip re-creation
+const categoryId = '654';
+console.log(`Using existing Bookings category: id=${categoryId}`);
+
+// 2. Create each product under that category
 for (const p of products) {
   console.log(`\nCreating: ${p.name}`);
 
-  // 1. Create product in CloudCart
   const ccRes = await fetch(`${STORE_URL}/api/v2/products`, {
     method: 'POST',
     headers: ccHeaders,
@@ -60,7 +64,13 @@ for (const p of products) {
           quantity: 9999,
           active: 'yes',
           tracking: 'no',
+          shipping: 'no',
+          digital: 'no',
+          sale: 'no',
           description: p.description,
+        },
+        relationships: {
+          category: { data: { type: 'categories', id: String(categoryId) } },
         },
       },
     }),
@@ -74,7 +84,7 @@ for (const p of products) {
   const productId = ccData.data.id;
   console.log(`  Product created: id=${productId}`);
 
-  // 2. Fetch the default variant ID
+  // 3. Fetch the default variant ID
   const varRes = await fetch(
     `${STORE_URL}/api/v2/variants?filter[product_id]=${productId}`,
     { headers: ccHeaders }
@@ -88,7 +98,7 @@ for (const p of products) {
   }
   console.log(`  Variant id=${variantId}`);
 
-  // 3. Write variant ID back to Supabase
+  // 4. Write variant ID back to Supabase
   const supaRes = await fetch(
     `${SUPABASE_URL}/rest/v1/services?id=eq.${p.service_id}`,
     {

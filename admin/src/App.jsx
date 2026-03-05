@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Bookings from './pages/Bookings.jsx';
 import Availability from './pages/Availability.jsx';
 import Layout from './components/Layout.jsx';
+import { BusinessProvider } from './context/BusinessContext.jsx';
 
 export default function App() {
   const [session, setSession] = useState(undefined); // undefined = loading
@@ -26,6 +27,7 @@ export default function App() {
   }
 
   return (
+    <BusinessProvider session={session}>
     <Layout session={session}>
       <Routes>
         <Route path="/"            element={<Navigate to="/bookings" replace />} />
@@ -35,5 +37,6 @@ export default function App() {
         <Route path="*"            element={<Navigate to="/bookings" replace />} />
       </Routes>
     </Layout>
+    </BusinessProvider>
   );
 }

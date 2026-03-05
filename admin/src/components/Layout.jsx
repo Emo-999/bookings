@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
+import { useBusiness } from '../context/BusinessContext.jsx';
 
 const NAV = [
   { to: '/bookings',     label: 'Bookings',     icon: '📋' },
@@ -10,19 +11,7 @@ const NAV = [
 
 export default function Layout({ children, session }) {
   const navigate = useNavigate();
-  const [business, setBusiness] = useState(null);
-
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from('business_members')
-        .select('business_id, businesses(name, type)')
-        .eq('user_id', session.user.id)
-        .single();
-      if (data) setBusiness(data.businesses);
-    }
-    load();
-  }, [session]);
+  const { businesses, activeBusiness, setActiveBusiness } = useBusiness();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -38,11 +27,23 @@ export default function Layout({ children, session }) {
       }}>
         <div style={{ padding:'24px 20px 16px' }}>
           <div style={{ fontSize:'1.1rem', fontWeight:'800', color:'#fff' }}>BookingOS</div>
-          {business && (
-            <div style={{ marginTop:'6px' }}>
-              <div style={{ fontSize:'.82rem', color:'#94a3b8' }}>
-                {business.type === 'hotel' ? '🏨' : '✂️'} {business.name}
-              </div>
+          {businesses.length > 1 ? (
+            <select
+              value={activeBusiness?.id || ''}
+              onChange={e => setActiveBusiness(businesses.find(b => b.id === e.target.value))}
+              style={{ marginTop:'8px', width:'100%', background:'#0f172a', color:'#cbd5e1',
+                       border:'1px solid #334155', borderRadius:'6px', padding:'5px 8px',
+                       fontSize:'.82rem', cursor:'pointer' }}
+            >
+              {businesses.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.type === 'hotel' ? '🏨' : '✂️'} {b.name}
+                </option>
+              ))}
+            </select>
+          ) : activeBusiness && (
+            <div style={{ marginTop:'6px', fontSize:'.82rem', color:'#94a3b8' }}>
+              {activeBusiness.type === 'hotel' ? '🏨' : '✂️'} {activeBusiness.name}
             </div>
           )}
         </div>

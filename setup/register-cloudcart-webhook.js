@@ -10,7 +10,7 @@
  */
 
 const STORE_URL      = 'https://smokezone.cloudcart.net';
-const WORKER_URL     = 'https://bookings.e-kurtisi.workers.dev';
+const WORKER_URL     = 'https://booking-admin.e-kurtisi.workers.dev';
 const CC_KEY         = process.env.CLOUDCART_API_KEY;
 const WEBHOOK_SECRET = process.env.CLOUDCART_WEBHOOK_SECRET;
 
@@ -33,9 +33,8 @@ const res = await fetch(`${STORE_URL}/api/v2/webhooks`, {
     data: {
       type: 'webhooks',
       attributes: {
-        topic: 'orders/paid',
-        address: `${WORKER_URL}/api/webhook/cloudcart`,
-        secret: WEBHOOK_SECRET,
+        event: 'order.updated',
+        url: `${WORKER_URL}/api/webhook/cloudcart`,
         active: true,
       },
     },
