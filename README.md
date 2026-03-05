@@ -1,7 +1,28 @@
 # CloudCart Booking System
 
 Multi-tenant booking system for hotels and hair salons.
-No server-side code on CloudCart. Everything is client-side + Supabase + Cloudflare Pages.
+Widget embedded on CloudCart → payments via CloudCart checkout → booking confirmed automatically on payment.
+
+---
+
+## Live Deployment
+
+| Resource | URL |
+|---|---|
+| **Admin Panel** | https://booking-admin.e-kurtisi.workers.dev |
+| **CloudCart Store** | https://smokezone.cloudcart.net |
+| **Widget JS** | https://booking-admin.e-kurtisi.workers.dev/widget.js |
+| **API — Reserve** | `POST` https://booking-admin.e-kurtisi.workers.dev/api/reserve |
+| **API — Webhook** | `POST` https://booking-admin.e-kurtisi.workers.dev/api/webhook/cloudcart |
+| **Supabase Project** | https://supabase.com/dashboard/project/exzobwyejtvtqsfrsrvz |
+
+### Customer-facing booking pages (on CloudCart)
+| Business | Booking Page |
+|---|---|
+| Hotel Adriatic | https://smokezone.cloudcart.net/book-a-room *(create page — see STEP-BY-STEP-GUIDE.md Phase 5)* |
+| Salon Bella | https://smokezone.cloudcart.net/book-appointment *(create page — see STEP-BY-STEP-GUIDE.md Phase 5)* |
+
+---
 
 ## Stack
 
